@@ -1,0 +1,99 @@
+{
+  "runs": [
+    {
+      "n": 125,
+      "brute_s": 0.08351701900000003,
+      "brute_calls": 7750,
+      "brute_peak_bytes": 7709,
+      "lsh_s": 1.3374307090000002,
+      "lsh_calls": 0,
+      "lsh_peak_bytes": 1309444
+    },
+    {
+      "n": 250,
+      "brute_s": 0.33549952299999974,
+      "brute_calls": 31125,
+      "brute_peak_bytes": 7428,
+      "lsh_s": 1.661560139,
+      "lsh_calls": 1,
+      "lsh_peak_bytes": 1958852
+    },
+    {
+      "n": 500,
+      "brute_s": 1.4351499409999997,
+      "brute_calls": 124750,
+      "brute_peak_bytes": 8108,
+      "lsh_s": 1.8974628440000005,
+      "lsh_calls": 7,
+      "lsh_peak_bytes": 3064408
+    },
+    {
+      "n": 1000,
+      "brute_s": 6.141951605,
+      "brute_calls": 499500,
+      "brute_peak_bytes": 10540,
+      "lsh_s": 2.456681877000001,
+      "lsh_calls": 28,
+      "lsh_peak_bytes": 5101232
+    },
+    {
+      "n": 2000,
+      "brute_s": 26.096595209999997,
+      "brute_calls": 1999000,
+      "brute_peak_bytes": 23544,
+      "lsh_s": 4.100891354999995,
+      "lsh_calls": 110,
+      "lsh_peak_bytes": 8893068
+    },
+    {
+      "n": 600,
+      "brute_s": 2.196025423,
+      "brute_calls": 179700,
+      "brute_peak_bytes": 9761,
+      "lsh_s": 2.1012958939999997,
+      "lsh_calls": 11,
+      "lsh_peak_bytes": 3496816
+    },
+    {
+      "n": 700,
+      "brute_s": 3.1338454770000004,
+      "brute_calls": 244650,
+      "brute_peak_bytes": 8388,
+      "lsh_s": 2.2709295020000004,
+      "lsh_calls": 14,
+      "lsh_peak_bytes": 3904724
+    },
+    {
+      "n": 800,
+      "brute_s": 3.7990989099999997,
+      "brute_calls": 319600,
+      "brute_peak_bytes": 8556,
+      "lsh_s": 2.206169913,
+      "lsh_calls": 17,
+      "lsh_peak_bytes": 4316088
+    },
+    {
+      "n": 4000,
+      "brute_s": 101.34128216100001,
+      "brute_calls": 7998000,
+      "brute_peak_bytes": 36592,
+      "lsh_s": 5.628051114000002,
+      "lsh_calls": 223,
+      "lsh_peak_bytes": 16415488
+    },
+    {
+      "n": 8000,
+      "brute_s": 408.34569412499997,
+      "brute_calls": 31996000,
+      "brute_peak_bytes": 89673,
+      "lsh_s": 10.404072694000035,
+      "lsh_calls": 478,
+      "lsh_peak_bytes": 31265074
+    }
+  ],
+  "machine": {
+    "platform": "macOS-26.6.2-x86_64-i386-64bit",
+    "processor": "i386",
+    "python": "3.9.6"
+  }
+}
