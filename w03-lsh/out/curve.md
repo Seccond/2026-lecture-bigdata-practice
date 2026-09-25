@@ -1,222 +1,110 @@
-# Task 2 · The crossover on this machine
+# Task 2 · 내 노트북에서의 교차점
 
-Raw numbers: `out/crossover.json` (10 sizes, 125 → 8,000, a 64× span).
-Produced by `python3 task2_crossover.py --sizes ...` in three invocations
-(`125,250,500,1000,2000`, then `600,700,800,4000`, then `8000` alone).
+원본 숫자: `out/crossover.json` (10개 크기, 125 → 8,000, 64배 범위).
+`task2_crossover.py`를 세 번 실행했다: `125,250,500,600,700,800,1000,2000` → `4000` → `8000`.
 
-## A6 · The machine
+## A6 · 측정 환경
 
 | | |
 |---|---|
-| CPU | Intel Core i7-9750H @ 2.60 GHz, 6 cores / 12 threads |
-| RAM | 16 GB (17,179,869,184 bytes) |
-| OS | macOS 26.6.2 (build 25G83), x86_64 |
-| Python | 3.9.6, CPython, stock interpreter, **no numpy** — everything below is pure Python |
-| Recorded by the script | `macOS-26.6.2-x86_64-i386-64bit` / `i386` / `3.9.6` (`platform.processor()` reports `i386` on macOS; the CPU line above is from `sysctl machdep.cpu.brand_string`) |
-| Also running | editor and a terminal, nothing CPU-heavy. The n=8,000 run was done on its own with nothing else started. |
+| CPU | Intel Core i7-9750H @ 2.60 GHz (물리 6코어 / 논리 12코어) |
+| RAM | 16 GB |
+| OS | macOS 26.7, x86_64 |
+| Python | 3.9.6 (CPython, numpy 없이 순수 Python) |
+| 함께 켜져 있던 것 | 파인더, 크롬(켜져만 있고 조작 안 함), 메모, 카카오톡, VS Code. 전원 연결 |
 
-Single-threaded throughout — both methods are plain Python loops, so the other
-11 hardware threads do nothing and the 6-core count buys nothing here.
+두 방법 모두 Python 반복문이라 코어 1개만 쓴다.
 
-### One change to the harness, stated up front
+**스크립트 수정 한 곳:** 원래 `task2_crossover.py`는 `bench.build()[:n]`을 썼는데, `bench.build()`는 항상
+2,120개만 만든다. 그래서 n > 2,120이면 실제로는 2,120개만 재게 된다. `corpus(bench, n)`으로 바꿔,
+2,120개 이하는 하네스 문서를 그대로 쓰고 그보다 크면 같은 규칙(어휘 5,000, 문서당 shingle 60개,
+같은 비율의 중복 문서)으로 새로 만들었다. `bench.py`는 수정하지 않았다.
 
-`task2_crossover.py` originally took `bench.build()[:n]`, but `bench.build()`
-always returns exactly `N_DOCS + PLANTED = 2,120` documents. Every size above
-2,120 would therefore have silently re-measured 2,120 documents and the curve
-would have gone flat. I replaced that with `corpus(bench, n)`, which uses the
-harness corpus verbatim at or below 2,120 and above it rebuilds with the same
-`VOCAB` (5,000), the same `SHINGLES` (60) and the same rate of planted
-near-duplicates (120 per 2,000). `bench.py` itself is untouched.
+## A3 · n에 따른 시간
 
-## A3 · Time against n
+LSH 설정: 해시 100개, 밴드 25개 (Task 3과 같음).
 
-| n | brute force | LSH (n=100 hashes, b=25 bands) | brute comparisons | LSH comparisons |
+| n | brute force | LSH | brute 비교 수 | LSH 비교 수 |
 |---:|---:|---:|---:|---:|
-| 125 | 0.08 s | 1.34 s | 7,750 | 0 |
-| 250 | 0.34 s | 1.66 s | 31,125 | 1 |
-| 500 | 1.44 s | 1.90 s | 124,750 | 7 |
-| **600** | **2.20 s** | **2.10 s** | 179,700 | 11 |
-| 700 | 3.13 s | 2.27 s | 244,650 | 14 |
-| 800 | 3.80 s | 2.21 s | 319,600 | 17 |
-| 1,000 | 6.14 s | 2.46 s | 499,500 | 28 |
-| 2,000 | 26.10 s | 4.10 s | 1,999,000 | 110 |
-| 4,000 | 101.34 s | 5.63 s | 7,998,000 | 223 |
-| 8,000 | **408.35 s** | 10.40 s | 31,996,000 | 478 |
+| 125 | 0.06 s | 1.00 s | 7,750 | 0 |
+| 250 | 0.22 s | 1.08 s | 31,125 | 1 |
+| 500 | 1.06 s | 1.46 s | 124,750 | 7 |
+| **600** | **1.24 s** | **1.25 s** | 179,700 | 11 |
+| 700 | 1.73 s | 1.26 s | 244,650 | 14 |
+| 800 | 2.34 s | 1.33 s | 319,600 | 17 |
+| 1,000 | 3.54 s | 1.48 s | 499,500 | 28 |
+| 2,000 | 14.32 s | 1.95 s | 1,999,000 | 110 |
+| 4,000 | 59.21 s | 3.05 s | 7,998,000 | 223 |
+| 8,000 | **272.31 s** | 5.62 s | 31,996,000 | 478 |
 
 ```
-time (s), log scale
- 500 |                                                        B
-     |                                       B
- 100 |
-     |                        B
-  10 |            B                    L            L         L
-     |      B  L        L        L
-   1 |   B     L
-     |B  L
- 0.1 +---------------------------------------------------------
-     125  250 500  1k      2k       4k            8k        n
-     B = brute force   L = LSH        (crossover between 500 and 600)
+시간(초), 로그 눈금
+ 300 |                                                   B
+ 100 |                                       B
+  10 |                          B
+     |                   B                               L
+   1 |       B  L  L L L L      L            L
+     |    B  L
+ 0.1 | B
+     +----------------------------------------------------
+      125 250 500  1k            2k          4k         8k
+      B = brute force   L = LSH   (500~700 사이에서 뒤집힘)
 ```
 
-Brute force spans 0.08 s → 408 s, a factor of **5,100**, while n grows 64×.
-LSH spans 1.34 s → 10.40 s, a factor of **7.8** over the same 64×.
+## A4 · brute force는 정말 제곱인가
 
-## A4 · Is brute force actually quadratic?
+n이 2배가 되면 시간이 4배가 되어야 한다.
 
-Two checks, both against the measured numbers rather than against the claim.
+| 2배로 늘릴 때 | brute 배율 | LSH 배율 |
+|---|---:|---:|
+| 125 → 250 | ×3.93 | ×1.08 |
+| 250 → 500 | ×4.81 | ×1.35 |
+| 500 → 1,000 | ×3.36 | ×1.02 |
+| 1,000 → 2,000 | ×4.04 | ×1.31 |
+| 2,000 → 4,000 | ×4.13 | ×1.57 |
+| 4,000 → 8,000 | ×4.60 | ×1.84 |
+| 평균 | **×4.15** | |
 
-**Doubling test** — n doubles, time should ×4:
+대체로 4배가 맞았다. 크게 튄 두 값(×4.81, ×3.36)은 모두 n=500이 낀 구간이다. n=500 한 점만 느리게
+측정됐기 때문이다(원인은 확인하지 못했다). 500을 건너뛰고 250 → 1,000(4배)을 보면 ×16.2로, 4² = 16과 맞는다.
+4,000 → 8,000도 ×4.60으로 조금 높았다.
 
-| doubling | ratio |
+`t = c·n²`로 맞추면 c = 4.22 µs이고, n=8,000에서 270 s를 예측한다(실측 272 s).
+비교 수는 모든 크기에서 정확히 n(n−1)/2이다.
+
+LSH는 2배로 늘려도 ×1.02 ~ ×1.84로 4배에 한참 못 미친다. 직선으로 맞추면 `t = 0.91 s + 0.00057 s·n`이다.
+
+## A5 · 가장 큰 n(8,000)에서의 최대 메모리
+
+| | 최대 메모리 (tracemalloc) |
 |---|---:|
-| 125 → 250 | ×4.02 |
-| 250 → 500 | ×4.28 |
-| 500 → 1,000 | ×4.26 |
-| 1,000 → 2,000 | ×4.25 |
-| 2,000 → 4,000 | ×3.88 |
-| 4,000 → 8,000 | ×4.03 |
+| brute force | **90 KB** |
+| LSH | **31 MB** |
 
-Six doublings, all between ×3.88 and ×4.28, mean ×4.12. **It holds.**
+문서 데이터는 타이머 시작 전에 만들어지므로 두 값에 포함되지 않는다. 활성 상태 보기로는 확인하지 않았다.
 
-**Constant test** — if `t = c·n²` then `t/n²` should be flat:
+## A2 · 불쾌해진 크기
 
-| n | 125 | 250 | 500 | 1,000 | 2,000 | 4,000 | 8,000 |
-|---|---|---|---|---|---|---|---|
-| t/n² (µs) | 5.35 | 5.37 | 5.74 | 6.14 | 6.52 | 6.33 | 6.38 |
+**n = 8,000, brute force 272초(4분 32초).** 기다리는 동안 지루했다.
+먼저 바닥난 것은 **시간**이다. 메모리는 16 GB 중 LSH가 31 MB, brute force는 90 KB밖에 쓰지 않았다.
 
-Flat to within ±10% across a 64× range of n. The slow drift upward from 5.3 to
-6.4 µs between n=125 and n=1,000 is real and is not a departure from n²: the
-per-comparison cost itself creeps up as the working set (8,000 shingle sets,
-~31 MB) stops fitting in cache, and `tracemalloc` is instrumenting every
-allocation the whole time. Above n=2,000 the constant settles at ≈6.4 µs and
-stays there. Fitting `t = 6.38e-6 · n²` predicts 408.3 s at n=8,000 against a
-measured 408.35 s.
+8,000에서 이미 A2 조건(1분 이상 대기)을 넘었으므로 16,000은 측정하지 않았다. 위 식으로 예측하면 약 1,080초(18분)다.
 
-The comparison counts are exactly `n(n-1)/2` at every size, as they must be,
-which confirms the count is quadratic independently of the clock.
+## A7 · 교차점
 
-**LSH, for contrast** — the same doublings give ×1.24, ×1.14, ×1.67, ×1.37,
-×1.85, i.e. approaching ×2, not ×4. A straight-line fit `t = 1.20 + 0.00115·n`
-predicts 10.40 s at n=8,000 against a measured 10.40 s. Linear with a
-**1.2 second fixed cost**, and that fixed cost is the whole story of A8.
+**n ≈ 600.**
 
-## A5 · Peak memory at the largest n (8,000)
+| n | brute | LSH | 차이 (brute − LSH) |
+|---:|---:|---:|---:|
+| 500 | 1.06 s | 1.46 s | −0.40 s (brute 승) |
+| 600 | 1.24 s | 1.25 s | −0.01 s (거의 동점) |
+| 700 | 1.73 s | 1.26 s | +0.47 s (LSH 승) |
 
-| | peak (tracemalloc) |
-|---|---:|
-| brute force | **87.6 KB** |
-| LSH | **29.8 MB** |
-| the corpus itself (allocated before the timer starts, so counted by neither) | 30.7 MB |
+600에서 거의 동점이고 700부터 LSH가 이긴다. 두 식 `4.22e-6·n² = 0.91 + 0.00057·n`을 풀면 n ≈ 540이다.
+이후 격차는 계속 벌어져 n=8,000에서 LSH가 48배 빠르다.
 
-`tracemalloc.start()` is called inside `timed()`, after the documents already
-exist, so these are the *working sets of the algorithms*, not the data.
+## A8 · 작은 n에서 LSH가 지는 이유
 
-Brute force is essentially free on memory: it holds two transient sets per
-comparison (`a | b`, `a & b`) and throws them away, so its peak is just the
-result set of found pairs — 87.6 KB at n=8,000, up from 7.5 KB at n=125 only
-because there are more planted pairs to store.
-
-LSH pays 29.8 MB, which is roughly the size of the corpus again. That is the
-signature matrix: 8,000 documents × 100 hashes = 800,000 Python ints in 8,000
-lists, plus the row-to-document index and the band buckets. It scales linearly
-(1.25 MB at n=125, 4.86 MB at n=1,000, 15.66 MB at n=4,000, 29.8 MB at
-n=8,000 — the marginal cost settles at about 3.7 KB per document, on top of a
-fixed ~0.6 MB for the row index over the 5,000-shingle vocabulary, which is why
-the per-document figure looks inflated at the small sizes).
-
-So the two methods trade the expensive resource: **brute force spends time and
-almost no memory; LSH spends memory to buy back the time.** At this scale that
-trade is a bargain — 30 MB against 16 GB is nothing, and it bought a 39×
-speedup.
-
-## A2 · Where it became unpleasant
-
-**n = 8,000, brute force, 408 seconds — 6.8 minutes of waiting.** That is the
-recorded unpleasant point. It is well past "a minute of waiting"; the terminal
-sat there long enough that I checked twice whether it had hung.
-
-**What ran out first: time, not memory, and not close.** At n=8,000 the whole
-process peaked around 31 MB of traced allocation on a machine with 16 GB. There
-was never any memory pressure, no swapping, no paging. Memory was ~0.2% used
-while the CPU had been pinned at 100% of one core for seven minutes.
-
-**n=16,000 was not run, deliberately.** The quadratic fit that just predicted
-n=8,000 to within 0.02% predicts `6.38e-6 × 16000² = 1,633 s`, i.e. **27
-minutes** for one brute-force point. Extrapolating a curve that has held over
-six consecutive doublings is better evidence than spending half an hour to
-confirm it a seventh time. Memory would still have been fine there (~60 MB
-corpus + working set); it is the clock that makes the size unreachable, and
-that is the actual shape of the problem — quadratic algorithms do not fail by
-crashing, they fail by making you wait, and the waiting quadruples while your
-data merely doubles.
-
-For scale: at 3 million documents the same constant gives 4.5 × 10¹² comparisons
-× 6.4 µs ≈ 2.9 × 10⁷ seconds ≈ **333 days** on one core.
-
-## A7 · The crossover
-
-**Between n = 500 and n = 600; approximately n ≈ 570.**
-
-| n | brute | LSH | winner |
-|---:|---:|---:|---|
-| 500 | 1.44 s | 1.90 s | brute force, by 0.46 s |
-| **600** | **2.20 s** | **2.10 s** | **LSH, by 0.10 s** — first size where LSH wins |
-| 700 | 3.13 s | 2.27 s | LSH, by 0.86 s |
-| 800 | 3.80 s | 2.21 s | LSH, by 1.59 s |
-
-Linear interpolation on the difference (−0.46 s at 500, +0.10 s at 600) puts
-the crossing at **n ≈ 582**. Solving the two fitted curves,
-`6.38e-6·n² = 1.20 + 0.00115·n`, gives **n ≈ 533**. Both land in the same place:
-somewhere around 550.
-
-After that the gap opens fast, because one side is linear and the other is not:
-
-| n | speedup of LSH over brute |
-|---:|---:|
-| 600 | 1.05× |
-| 1,000 | 2.5× |
-| 2,000 | 6.4× |
-| 4,000 | 18× |
-| 8,000 | **39×** |
-
-## A8 · Why LSH loses at small n
-
-It loses because it has already paid before it compares anything, and at small
-n there is nothing to compare anyway.
-
-Look at the flat part of the LSH curve: **1.34 s at n=125, when it made zero
-comparisons.** Brute force at n=125 did 7,750 real comparisons in 0.08 s — one
-sixteenth of the time — and got the right answer. LSH's 1.34 s bought nothing
-at all at that size.
-
-That 1.2 s intercept is three specific things, none of which shrink with n:
-
-1. **Hashing the row space.** `minhash_signatures` walks every row of the
-   characteristic matrix and evaluates all 100 hash functions on it. The row
-   space is the *vocabulary*, not the document count — `VOCAB = 5,000` — and
-   125 documents × 60 shingles already touch about 4,000 distinct shingles. So
-   the row loop is nearly full length at n=125 and barely longer at n=8,000.
-   That is ~500,000 Python-level lambda calls before a single pair is looked at.
-2. **Building the signature matrix.** 100 min-updates for every 1 in the
-   matrix. This part *is* linear in n (60 ones per document), and it is what
-   makes the line slope upward at 0.00115 s/doc.
-3. **Banding and bucketing.** 25 dictionary insertions per document, plus
-   tuple construction for each band key.
-
-None of that touches the scoring function, which is exactly why the harness in
-Task 3 charges zero for it — and at n=125 that accounting is a fiction, because
-the un-charged work is the *entire* runtime.
-
-The real point is the shape, not the constant. Brute force pays `6.4 µs × n²/2`
-and nothing else. LSH pays `1.2 s + 1.15 ms × n` and then a handful of real
-comparisons. Below n≈550 the fixed setup is larger than the whole quadratic bill,
-so you have bought machinery for a job you could have done by hand. Above it,
-the quadratic term runs away from the linear one and never comes back: at
-n=8,000 LSH's fixed 1.2 s is 0.3% of what brute force spends, and at n=3,000,000
-it would be invisible against 333 days.
-
-Tuning the setup cost would move the crossover but not the conclusion. Halving
-the hash count to 50 would roughly halve the 1.2 s intercept and pull the
-crossover down to around n≈400, at the cost of a coarser S-curve. The crossover
-is a property of the constants; the reason to use LSH at all is a property of
-the exponents.
+LSH는 비교하기 전에 모든 문서의 지문(minhash 서명)을 찍는 준비 시간이 든다. 이 시간은 거의 고정이라
+(위 식의 0.91 s), 비교할 것이 적은 작은 n에서는 준비 시간이 brute force의 비교 시간보다 크다.
+n=125에서 LSH는 비교를 0번 하고도 1.00 s가 걸렸고, brute force는 7,750번을 비교하고 0.06 s에 끝났다.
